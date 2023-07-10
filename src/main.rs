@@ -51,6 +51,11 @@ struct Args {
 
 fn main() {
 	let args = Args::parse();
+	if args.player_count < 1 || args.player_count > 7 {
+		println!("Player count must be from 1 to 7");
+		return;
+	}
+
 	let mut rng = rand::thread_rng();
 	println!("Scythe Setup:");
 	choose_structure_bonus(&mut rng);
