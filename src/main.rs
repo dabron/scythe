@@ -1,3 +1,4 @@
+use clap::Parser;
 use rand::prelude::*;
 
 fn choose_structure_bonus(mut rng: &mut impl Rng) {
@@ -42,18 +43,24 @@ fn init_player_mats(mut rng: &mut impl Rng) -> Vec<&'static str> {
 	player_mats
 }
 
+#[derive(Parser)]
+struct Args {
+	#[arg(default_value_t = 5)]
+	player_count: u8,
+}
+
 fn main() {
+	let args = Args::parse();
 	let mut rng = rand::thread_rng();
 	println!("Scythe Setup:");
 	choose_structure_bonus(&mut rng);
 	let factions = init_factions(&mut rng);
 	let player_mats = init_player_mats(&mut rng);
-	let player_count = 5;
 
-	for i in 0..player_count {
+	for i in 0..args.player_count {
 		println!("Player {}: {} {}",
 			i + 1,
-			factions[i],
-			player_mats[i]);
+			factions[i as usize],
+			player_mats[i as usize]);
 	}
 }
