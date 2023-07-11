@@ -9,6 +9,8 @@ struct Args {
 	invaders_from_afar: bool,
 	#[arg(short, long)]
 	wind_gambit: bool,
+	#[arg(short, long)]
+	rise_of_fenris: bool,
 }
 
 struct Player {
@@ -21,14 +23,14 @@ fn choose_resolution_tile(mut rng: &mut impl Rng) {
 	print!("     Resolution: ");
 	let mut resolution_tiles = vec![
 		"Standard",
-		"Land Rush",
-		"Factory Explosion",
-		"Spoils of War",
-		"King of the Hill",
-		"Déjà Vu",
-		"Mission Possible",
-		"Doomsday Clock",
-		"Backup Plan",
+		"Land Rush [1]",
+		"Factory Explosion [2]",
+		"Spoils of War [3]",
+		"King of the Hill [4]",
+		"Déjà Vu [5]",
+		"Mission Possible [6]",
+		"Doomsday Clock [7]",
+		"Backup Plan [8]",
 	];
 	resolution_tiles.shuffle(&mut rng);
 	println!("{}", resolution_tiles[0]);
@@ -37,24 +39,24 @@ fn choose_resolution_tile(mut rng: &mut impl Rng) {
 fn choose_airship_tiles(mut rng: &mut impl Rng) {
 	print!("        Airship: ");
 	let mut aggressive_airship_tile = vec![
-		"Blitzkrieg",
-		"Bombard",
-		"Bounty",
-		"Distract",
-		"Espionage",
-		"Siege Engine",
-		"Toll",
-		"War Correspondent",
+		"Blitzkrieg [1]",
+		"Bombard [2]",
+		"Bounty [3]",
+		"Distract [4]",
+		"Espionage [5]",
+		"Siege Engine [6]",
+		"Toll [7]",
+		"War Correspondent [8]",
 	];
 	let mut passive_airship_tile = vec![
-		"Boost",
-		"Craft",
-		"Drill",
-		"Ferry",
-		"Hero",
-		"Negotiate",
-		"Reap",
-		"Safe Haven",
+		"Boost [9]",
+		"Craft [10]",
+		"Drill [11]",
+		"Ferry [12]",
+		"Hero [13]",
+		"Negotiate [14]",
+		"Reap [15]",
+		"Safe Haven [16]",
 	];
 	aggressive_airship_tile.shuffle(&mut rng);
 	passive_airship_tile.shuffle(&mut rng);
@@ -75,7 +77,12 @@ fn choose_structure_bonus(mut rng: &mut impl Rng) {
 	println!("{}", structure_bonuses[0]);
 }
 
-fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'static str>{
+fn add_invaders(factions: &mut Vec<&'static str>) {
+	factions.push("Albion");
+	factions.push("Togawa");
+}
+
+fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenris: bool) -> Vec<&'static str>{
 	let mut factions = vec![
 		"Nordic",
 		"Rusviet",
@@ -85,8 +92,11 @@ fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'stat
 	];
 
 	if invaders_from_afar {
-		factions.push("Albion");
-		factions.push("Togawa");
+		add_invaders(&mut factions);
+	}
+
+	if rise_of_fenris {
+		factions.push("Tesla");
 	}
 
 	factions.shuffle(&mut rng);
@@ -95,16 +105,16 @@ fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'stat
 
 fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'static str> {
 	let mut player_mats = vec![
-		"Industrial",
-		"Engineering",
-		"Patriotic",
-		"Mechanical",
-		"Agricultural",
+		"Industrial [1]",
+		"Engineering [2]",
+		"Patriotic [3]",
+		"Mechanical [4]",
+		"Agricultural [5]",
 	];
 
 	if invaders_from_afar {
-		player_mats.push("Militant");
-		player_mats.push("Innovative");
+		player_mats.push("Militant [2A]");
+		player_mats.push("Innovative [3A]");
 	}
 
 	player_mats.shuffle(&mut rng);
@@ -112,8 +122,8 @@ fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'s
 }
 
 fn is_banned(faction: &str, player_mat: &str) -> bool {
-	(faction == "Rusviet" && player_mat == "Industrial") ||
-	(faction == "Crimea"  && player_mat == "Patriotic")
+	(faction == "Rusviet" && player_mat == "Industrial [1]") ||
+	(faction == "Crimea"  && player_mat == "Patriotic [3]")
 }
 
 fn main() {
@@ -136,7 +146,7 @@ fn main() {
 
 	println!();
 
-	let mut factions = init_factions(&mut rng, args.invaders_from_afar);
+	let mut factions = init_factions(&mut rng, args.invaders_from_afar, args.rise_of_fenris);
 	let mut player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
 	let mut players: Vec<Player> = Vec::new();
 	
@@ -164,10 +174,23 @@ fn main() {
 	}
 
 	for player in players {
-		println!("       Player {}: {} - {}",
-			player.id,
-			player.faction,
-			player.player_mat);
+		if player.faction == "Tesla" {
+			if !args.invaders_from_afar {
+				add_invaders(&mut factions);
+				factions.shuffle(&mut rng);
+			}
+			let base = factions.remove(0);
+			println!("       Player {}: {} [{}] - {}",
+				player.id,
+				player.faction,
+				base,
+				player.player_mat);
+		} else {
+			println!("       Player {}: {} - {}",
+				player.id,
+				player.faction,
+				player.player_mat);
+		}
 	}
 
 	println!();
