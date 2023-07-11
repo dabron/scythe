@@ -1,10 +1,64 @@
 use clap::Parser;
 use rand::prelude::*;
 
+#[derive(Parser)]
+struct Args {
+	#[arg(default_value_t = 5)]
+	player_count: u8,
+	#[arg(short, long)]
+	invaders_from_afar: bool,
+	#[arg(short, long)]
+	wind_gambit: bool,
+}
+
 struct Player {
 	id: u8,
 	faction: &'static str,
 	player_mat: &'static str,
+}
+
+fn choose_resolution_tile(mut rng: &mut impl Rng) {
+	print!("     Resolution: ");
+	let mut resolution_tiles = vec![
+		"Standard",
+		"Land Rush",
+		"Factory Explosion",
+		"Spoils of War",
+		"King of the Hill",
+		"Déjà Vu",
+		"Mission Possible",
+		"Doomsday Clock",
+		"Backup Plan",
+	];
+	resolution_tiles.shuffle(&mut rng);
+	println!("{}", resolution_tiles[0]);
+}
+
+fn choose_airship_tiles(mut rng: &mut impl Rng) {
+	print!("        Airship: ");
+	let mut aggressive_airship_tile = vec![
+		"Blitzkrieg",
+		"Bombard",
+		"Bounty",
+		"Distract",
+		"Espionage",
+		"Siege Engine",
+		"Toll",
+		"War Correspondent",
+	];
+	let mut passive_airship_tile = vec![
+		"Boost",
+		"Craft",
+		"Drill",
+		"Ferry",
+		"Hero",
+		"Negotiate",
+		"Reap",
+		"Safe Haven",
+	];
+	aggressive_airship_tile.shuffle(&mut rng);
+	passive_airship_tile.shuffle(&mut rng);
+	println!("{} - {}", aggressive_airship_tile[0], passive_airship_tile[0]);
 }
 
 fn choose_structure_bonus(mut rng: &mut impl Rng) {
@@ -62,14 +116,6 @@ fn is_banned(faction: &str, player_mat: &str) -> bool {
 	(faction == "Crimea"  && player_mat == "Patriotic")
 }
 
-#[derive(Parser)]
-struct Args {
-	#[arg(default_value_t = 5)]
-	player_count: u8,
-	#[arg(short, long)]
-	invaders_from_afar: bool,
-}
-
 fn main() {
 	let args = Args::parse();
 	const MIN_PLAYER_COUNT: u8 = 1;
@@ -80,8 +126,16 @@ fn main() {
 	}
 	
 	let mut rng = rand::thread_rng();
-	println!("Scythe Setup:");
+	println!();
 	choose_structure_bonus(&mut rng);
+	
+	if args.wind_gambit {
+		choose_resolution_tile(&mut rng);
+		choose_airship_tiles(&mut rng);
+	}
+
+	println!();
+
 	let mut factions = init_factions(&mut rng, args.invaders_from_afar);
 	let mut player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
 	let mut players: Vec<Player> = Vec::new();
@@ -110,9 +164,11 @@ fn main() {
 	}
 
 	for player in players {
-		println!("Player {}: {} {}",
+		println!("       Player {}: {} - {}",
 			player.id,
 			player.faction,
 			player.player_mat);
 	}
+
+	println!();
 }
