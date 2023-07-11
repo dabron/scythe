@@ -1,6 +1,12 @@
 use clap::Parser;
 use rand::prelude::*;
 
+struct Player {
+	id: u8,
+	faction: &'static str,
+	player_mat: &'static str,
+}
+
 fn choose_structure_bonus(mut rng: &mut impl Rng) {
 	print!("Structure Bonus: ");
 	let mut structure_bonuses = vec![
@@ -51,6 +57,11 @@ fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'s
 	player_mats
 }
 
+fn is_banned(faction: &str, player_mat: &str) -> bool {
+	(faction == "Rusviet" && player_mat == "Industrial") ||
+	(faction == "Crimea"  && player_mat == "Patriotic")
+}
+
 #[derive(Parser)]
 struct Args {
 	#[arg(default_value_t = 5)]
@@ -61,22 +72,47 @@ struct Args {
 
 fn main() {
 	let args = Args::parse();
+	const MIN_PLAYER_COUNT: u8 = 1;
 	let max_player_count = if args.invaders_from_afar { 7 } else { 5 };
-	if args.player_count < 1 || args.player_count > max_player_count {
-		println!("Player count must be from 1 to {}", max_player_count);
+	if args.player_count < MIN_PLAYER_COUNT || args.player_count > max_player_count {
+		println!("Player count must be from {} to {}", MIN_PLAYER_COUNT, max_player_count);
 		return;
 	}
-
+	
 	let mut rng = rand::thread_rng();
 	println!("Scythe Setup:");
 	choose_structure_bonus(&mut rng);
-	let factions = init_factions(&mut rng, args.invaders_from_afar);
-	let player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
-
+	let mut factions = init_factions(&mut rng, args.invaders_from_afar);
+	let mut player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
+	let mut players: Vec<Player> = Vec::new();
+	
 	for i in 0..args.player_count {
+		let faction = factions.remove(0);
+		let mut player_mat = player_mats.remove(0);
+		if is_banned(faction, player_mat) {
+			if player_mats.len() > 0 {
+				let player_mat2 = player_mats.remove(0);
+				player_mats.push(player_mat);
+				player_mats.shuffle(&mut rng);
+				player_mat = player_mat2;
+			} else {
+				let index = rng.gen_range(0..i) as usize;
+				let player_mat2 = players[index].player_mat;
+				players[index].player_mat = player_mat;
+				player_mat = player_mat2;
+			}
+		}
+		players.push(Player {
+			id: i + 1,
+			faction: faction,
+			player_mat: player_mat,
+		});
+	}
+
+	for player in players {
 		println!("Player {}: {} {}",
-			i + 1,
-			factions[i as usize],
-			player_mats[i as usize]);
+			player.id,
+			player.faction,
+			player.player_mat);
 	}
 }
