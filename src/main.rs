@@ -17,12 +17,18 @@ struct Args {
 struct Player {
 	id: u8,
 	faction: Faction,
-	player_mat: &'static str,
+	player_mat: PlayerMat,
 }
 
 struct Faction {
 	name: &'static str,
 	color: Color,
+}
+
+struct PlayerMat {
+	name: &'static str,
+	number: &'static str,
+	value: f32,
 }
 
 fn choose_resolution_tile(mut rng: &mut impl Rng) {
@@ -109,27 +115,27 @@ fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenri
 	factions
 }
 
-fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'static str> {
+fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<PlayerMat> {
 	let mut player_mats = vec![
-		"Industrial [1]",
-		"Engineering [2]",
-		"Patriotic [3]",
-		"Mechanical [4]",
-		"Agricultural [5]",
+		PlayerMat{ name: "Industrial",   number: "1", value: 1. },
+		PlayerMat{ name: "Engineering",  number: "2", value: 2. },
+		PlayerMat{ name: "Patriotic",    number: "3", value: 3. },
+		PlayerMat{ name: "Mechanical",   number: "4", value: 4. },
+		PlayerMat{ name: "Agricultural", number: "5", value: 5. },
 	];
 
 	if invaders_from_afar {
-		player_mats.push("Militant [2A]");
-		player_mats.push("Innovative [3A]");
+		player_mats.push(PlayerMat{ name: "Militant",   number: "2A", value: 2.5 });
+		player_mats.push(PlayerMat{ name: "Innovative", number: "3A", value: 3.5 });
 	}
 
 	player_mats.shuffle(&mut rng);
 	player_mats
 }
 
-fn is_banned(faction: &Faction, player_mat: &str) -> bool {
-	(faction.name == "Rusviet" && player_mat == "Industrial [1]") ||
-	(faction.name == "Crimea"  && player_mat == "Patriotic [3]")
+fn is_banned(faction: &Faction, player_mat: &PlayerMat) -> bool {
+	(faction.name == "Rusviet" && player_mat.name == "Industrial") ||
+	(faction.name == "Crimea"  && player_mat.name == "Patriotic")
 }
 
 fn main() {
@@ -140,11 +146,11 @@ fn main() {
 		println!("Player count must be from {} to {}", MIN_PLAYER_COUNT, max_player_count);
 		return;
 	}
-	
+
 	let mut rng = rand::thread_rng();
 	println!();
 	choose_structure_bonus(&mut rng);
-	
+
 	if args.wind_gambit {
 		choose_resolution_tile(&mut rng);
 		choose_airship_tiles(&mut rng);
@@ -155,11 +161,12 @@ fn main() {
 	let mut factions = init_factions(&mut rng, args.invaders_from_afar, args.rise_of_fenris);
 	let mut player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
 	let mut players: Vec<Player> = Vec::new();
+	let mut lowest_value = f32::MAX;
 	
 	for i in 0..args.player_count {
 		let faction = factions.remove(0);
 		let mut player_mat = player_mats.remove(0);
-		if is_banned(&faction, player_mat) {
+		if is_banned(&faction, &player_mat) {
 			if player_mats.len() > 0 {
 				let player_mat2 = player_mats.remove(0);
 				player_mats.push(player_mat);
@@ -167,10 +174,11 @@ fn main() {
 				player_mat = player_mat2;
 			} else {
 				let index = rng.gen_range(0..i) as usize;
-				let player_mat2 = players[index].player_mat;
-				players[index].player_mat = player_mat;
-				player_mat = player_mat2;
+				std::mem::swap(&mut player_mat, &mut players[index].player_mat)
 			}
+		}
+		if player_mat.value < lowest_value {
+			lowest_value = player_mat.value;
 		}
 		players.push(Player {
 			id: i + 1,
@@ -180,23 +188,28 @@ fn main() {
 	}
 
 	for player in players {
-		if player.faction.name == "Tesla" {
+		let value_color = if player.player_mat.value == lowest_value
+		{
+			Color::TrueColor{ r: 0x99, g: 0xff, b: 0x99}
+		} else {
+			Color::TrueColor{ r: 0x33, g: 0xcc, b: 0x33}
+		};
+		let base_str = if player.faction.name == "Tesla" {
 			if !args.invaders_from_afar {
 				add_invaders(&mut factions);
 				factions.shuffle(&mut rng);
 			}
 			let base = factions.remove(0);
-			println!("       Player {}: {} [{}] - {}",
-				player.id,
-				player.faction.name.color(player.faction.color),
-				base.name.color(base.color),
-				player.player_mat);
+			format!(" [{}]", base.name.color(base.color))
 		} else {
-			println!("       Player {}: {} - {}",
-				player.id,
-				player.faction.name.color(player.faction.color),
-				player.player_mat);
-		}
+			String::new()
+		};
+		println!("       Player {}: {}{} - {} [{}]",
+			player.id,
+			player.faction.name.color(player.faction.color),
+			base_str,
+			player.player_mat.name.truecolor(0x99, 0x99, 0x99),
+			player.player_mat.number.color(value_color));
 	}
 
 	println!();
