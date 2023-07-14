@@ -1,4 +1,5 @@
 use clap::Parser;
+use colored::*;
 use rand::prelude::*;
 
 #[derive(Parser)]
@@ -15,8 +16,13 @@ struct Args {
 
 struct Player {
 	id: u8,
-	faction: &'static str,
+	faction: Faction,
 	player_mat: &'static str,
+}
+
+struct Faction {
+	name: &'static str,
+	color: Color,
 }
 
 fn choose_resolution_tile(mut rng: &mut impl Rng) {
@@ -77,18 +83,18 @@ fn choose_structure_bonus(mut rng: &mut impl Rng) {
 	println!("{}", structure_bonuses[0]);
 }
 
-fn add_invaders(factions: &mut Vec<&'static str>) {
-	factions.push("Albion");
-	factions.push("Togawa");
+fn add_invaders(factions: &mut Vec<Faction>) {
+	factions.push(Faction{ name: "Albion", color: Color::BrightGreen });
+	factions.push(Faction{ name: "Togawa", color: Color::BrightMagenta });
 }
 
-fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenris: bool) -> Vec<&'static str>{
+fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenris: bool) -> Vec<Faction>{
 	let mut factions = vec![
-		"Nordic",
-		"Rusviet",
-		"Crimea",
-		"Saxony",
-		"Polania",
+		Faction{ name: "Nordic",  color: Color::BrightBlue },
+		Faction{ name: "Rusviet", color: Color::BrightRed },
+		Faction{ name: "Crimea",  color: Color::BrightYellow },
+		Faction{ name: "Saxony",  color: Color::BrightBlack },
+		Faction{ name: "Polania", color: Color::BrightWhite },
 	];
 
 	if invaders_from_afar {
@@ -96,7 +102,7 @@ fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenri
 	}
 
 	if rise_of_fenris {
-		factions.push("Tesla");
+		factions.push(Faction{ name: "Tesla", color: Color::BrightCyan });
 	}
 
 	factions.shuffle(&mut rng);
@@ -121,9 +127,9 @@ fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<&'s
 	player_mats
 }
 
-fn is_banned(faction: &str, player_mat: &str) -> bool {
-	(faction == "Rusviet" && player_mat == "Industrial [1]") ||
-	(faction == "Crimea"  && player_mat == "Patriotic [3]")
+fn is_banned(faction: &Faction, player_mat: &str) -> bool {
+	(faction.name == "Rusviet" && player_mat == "Industrial [1]") ||
+	(faction.name == "Crimea"  && player_mat == "Patriotic [3]")
 }
 
 fn main() {
@@ -153,7 +159,7 @@ fn main() {
 	for i in 0..args.player_count {
 		let faction = factions.remove(0);
 		let mut player_mat = player_mats.remove(0);
-		if is_banned(faction, player_mat) {
+		if is_banned(&faction, player_mat) {
 			if player_mats.len() > 0 {
 				let player_mat2 = player_mats.remove(0);
 				player_mats.push(player_mat);
@@ -174,7 +180,7 @@ fn main() {
 	}
 
 	for player in players {
-		if player.faction == "Tesla" {
+		if player.faction.name == "Tesla" {
 			if !args.invaders_from_afar {
 				add_invaders(&mut factions);
 				factions.shuffle(&mut rng);
@@ -182,13 +188,13 @@ fn main() {
 			let base = factions.remove(0);
 			println!("       Player {}: {} [{}] - {}",
 				player.id,
-				player.faction,
-				base,
+				player.faction.name.color(player.faction.color),
+				base.name.color(base.color),
 				player.player_mat);
 		} else {
 			println!("       Player {}: {} - {}",
 				player.id,
-				player.faction,
+				player.faction.name.color(player.faction.color),
 				player.player_mat);
 		}
 	}
