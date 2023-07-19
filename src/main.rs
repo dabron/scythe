@@ -12,6 +12,8 @@ struct Args {
 	wind_gambit: bool,
 	#[arg(short, long)]
 	rise_of_fenris: bool,
+	#[arg(short, long)]
+	modular_board: bool,
 }
 
 struct Player {
@@ -75,16 +77,28 @@ fn choose_airship_tiles(mut rng: &mut impl Rng) {
 	println!("{} - {}", aggressive_airship_tile[0], passive_airship_tile[0]);
 }
 
-fn choose_structure_bonus(mut rng: &mut impl Rng) {
+fn choose_structure_bonus(mut rng: &mut impl Rng, modular_board: bool) {
 	print!("Structure Bonus: ");
 	let mut structure_bonuses = vec![
-		"Adjacent Lakes",
-		"Adjacent Tunnels",
-		"Adjacent Encounters",
-		"Tunnels",
-		"Straight Line",
-		"Tundras & Farms",
+		"Tunnels adjacent to structures",
+		"Lakes adjacent to structures",
+		"Encounters adjacent to structures",
+		"Structures on tunnels",
+		"Structures in a row",
+		"Structures on farms or tundras",
 	];
+
+	if modular_board {
+		structure_bonuses.push("Structures adjacent to bases or the Factory");
+		structure_bonuses.push("Structures adjacent to the same lake");
+		structure_bonuses.push("Structures on villages");
+		structure_bonuses.push("Structures on mountains or forests");
+		structure_bonuses.push("Structures on encounters");
+		structure_bonuses.push("Structures not adjacent to other structures");
+		structure_bonuses.push("Structures in a diamond");
+		structure_bonuses.push("Structures adjacent to the same encounter");
+	}
+
 	structure_bonuses.shuffle(&mut rng);
 	println!("{}", structure_bonuses[0]);
 }
@@ -149,7 +163,7 @@ fn main() {
 
 	let mut rng = rand::thread_rng();
 	println!();
-	choose_structure_bonus(&mut rng);
+	choose_structure_bonus(&mut rng, args.modular_board);
 
 	if args.wind_gambit {
 		choose_resolution_tile(&mut rng);
