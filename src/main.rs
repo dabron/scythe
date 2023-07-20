@@ -191,9 +191,6 @@ fn main() {
 				std::mem::swap(&mut player_mat, &mut players[index].player_mat)
 			}
 		}
-		if player_mat.value < lowest_value {
-			lowest_value = player_mat.value;
-		}
 		players.push(Player {
 			id: i + 1,
 			faction: faction,
@@ -201,7 +198,13 @@ fn main() {
 		});
 	}
 
-	for player in players {
+	for player in &players {
+		if player.player_mat.value < lowest_value {
+			lowest_value = player.player_mat.value;
+		}
+	}
+
+	for player in &players {
 		let value_color = if player.player_mat.value == lowest_value
 		{
 			Color::TrueColor{ r: 0x99, g: 0xff, b: 0x99}
