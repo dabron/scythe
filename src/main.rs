@@ -16,6 +16,7 @@ struct Args {
 	modular_board: bool,
 }
 
+#[derive(Default)]
 struct Player {
 	id: u8,
 	faction: Faction,
@@ -27,6 +28,16 @@ struct Faction {
 	color: Color,
 }
 
+impl Default for Faction {
+	fn default() -> Self {
+		Self {
+			name: "",
+			color: Color::BrightBlack
+		}
+	}
+}
+
+#[derive(Default)]
 struct PlayerMat {
 	name: &'static str,
 	number: &'static str,
@@ -178,24 +189,33 @@ fn main() {
 	let mut lowest_value = f32::MAX;
 	
 	for i in 0..args.player_count {
-		let faction = factions.remove(0);
-		let mut player_mat = player_mats.remove(0);
-		if is_banned(&faction, &player_mat) {
-			if player_mats.len() > 0 {
-				let player_mat2 = player_mats.remove(0);
-				player_mats.push(player_mat);
-				player_mats.shuffle(&mut rng);
-				player_mat = player_mat2;
-			} else {
-				let index = rng.gen_range(0..i) as usize;
-				std::mem::swap(&mut player_mat, &mut players[index].player_mat)
-			}
-		}
 		players.push(Player {
 			id: i + 1,
-			faction: faction,
-			player_mat: player_mat,
+			faction: factions.remove(0),
+			player_mat: player_mats.remove(0),
 		});
+	}
+
+	for i in 0..args.player_count {
+		let mut player = std::mem::take(&mut players[i as usize]);
+		if is_banned(&player.faction, &player.player_mat) {
+			if player_mats.len() > 0 {
+				let old_player_mat = player.player_mat;
+				player.player_mat = player_mats.remove(0);
+				player_mats.push(old_player_mat);
+				player_mats.shuffle(&mut rng);
+			} else {
+				let other_players = args.player_count - 1;
+				let mut index = rng.gen_range(0..other_players);
+				if index == player.id - 1 {
+					index += 1;
+				}
+				let mut other_player = std::mem::take(&mut players[index as usize]);
+				std::mem::swap(&mut player.player_mat, &mut other_player.player_mat);
+				players[index as usize] = other_player;
+			}
+		}
+		players[i as usize] = player;
 	}
 
 	for player in &players {
