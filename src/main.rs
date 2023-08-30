@@ -20,6 +20,7 @@ struct Args {
 struct Player {
 	id: u8,
 	faction: Faction,
+	base: Faction,
 	player_mat: PlayerMat,
 }
 
@@ -114,12 +115,17 @@ fn choose_structure_bonus(mut rng: &mut impl Rng, modular_board: bool) {
 	println!("{}", structure_bonuses[0]);
 }
 
-fn add_invaders(factions: &mut Vec<Faction>) {
+fn add_invaders_from_afar(factions: &mut Vec<Faction>) {
 	factions.push(Faction{ name: "Albion", color: Color::BrightGreen });
 	factions.push(Faction{ name: "Togawa", color: Color::BrightMagenta });
 }
 
-fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenris: bool) -> Vec<Faction>{
+fn add_rise_of_fenris(factions: &mut Vec<Faction>) {
+	factions.push(Faction{ name: "Tesla", color: Color::BrightCyan });
+	factions.push(Faction{ name: "Fenris", color: Color::TrueColor{ r: 0xff, g: 0x99, b: 0x00 } });
+}
+
+fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenris: bool) -> Vec<Faction> {
 	let mut factions = vec![
 		Faction{ name: "Nordic",  color: Color::BrightBlue },
 		Faction{ name: "Rusviet", color: Color::BrightRed },
@@ -129,15 +135,19 @@ fn init_factions(mut rng: &mut impl Rng, invaders_from_afar: bool, rise_of_fenri
 	];
 
 	if invaders_from_afar {
-		add_invaders(&mut factions);
+		add_invaders_from_afar(&mut factions);
 	}
 
 	if rise_of_fenris {
-		factions.push(Faction{ name: "Tesla", color: Color::BrightCyan });
+		add_rise_of_fenris(&mut factions);
 	}
 
 	factions.shuffle(&mut rng);
 	factions
+}
+
+fn init_bases(mut rng: &mut impl Rng) -> Vec<Faction> {
+	init_factions(&mut rng, true, false)
 }
 
 fn init_player_mats(mut rng: &mut impl Rng, invaders_from_afar: bool) -> Vec<PlayerMat> {
@@ -184,6 +194,7 @@ fn main() {
 	println!();
 
 	let mut factions = init_factions(&mut rng, args.invaders_from_afar, args.rise_of_fenris);
+	let mut bases = init_bases(&mut rng);
 	let mut player_mats = init_player_mats(&mut rng, args.invaders_from_afar);
 	let mut players: Vec<Player> = Vec::new();
 	let mut lowest_value = f32::MAX;
@@ -192,11 +203,12 @@ fn main() {
 		players.push(Player {
 			id: i + 1,
 			faction: factions.remove(0),
+			base: Faction::default(),
 			player_mat: player_mats.remove(0),
 		});
 	}
 
-	for i in 0..args.player_count {
+	for i in 0..players.len() {
 		let mut player = std::mem::take(&mut players[i as usize]);
 		if is_banned(&player.faction, &player.player_mat) {
 			if player_mats.len() > 0 {
@@ -218,26 +230,33 @@ fn main() {
 		players[i as usize] = player;
 	}
 
-	for player in &players {
+	for mut player in &mut players {
 		if player.player_mat.value < lowest_value {
 			lowest_value = player.player_mat.value;
+		}
+		for i in 0..bases.len() {
+			if player.faction.name == bases[i as usize].name {
+				player.base = bases.remove(i);
+				break;
+			}
+		}
+	}
+
+	for mut player in &mut players {
+		if player.base.name == "" {
+			player.base = bases.remove(0);
 		}
 	}
 
 	for player in &players {
 		let value_color = if player.player_mat.value == lowest_value
 		{
-			Color::TrueColor{ r: 0x99, g: 0xff, b: 0x99}
+			Color::TrueColor{ r: 0x99, g: 0xff, b: 0x99 }
 		} else {
-			Color::TrueColor{ r: 0x33, g: 0xcc, b: 0x33}
+			Color::TrueColor{ r: 0x33, g: 0xcc, b: 0x33 }
 		};
-		let base_str = if player.faction.name == "Tesla" {
-			if !args.invaders_from_afar {
-				add_invaders(&mut factions);
-				factions.shuffle(&mut rng);
-			}
-			let base = factions.remove(0);
-			format!(" [{}]", base.name.color(base.color))
+		let base_str = if player.faction.name != player.base.name {
+			format!(" [{}]", player.base.name.color(player.base.color))
 		} else {
 			String::new()
 		};
