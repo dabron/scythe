@@ -230,7 +230,7 @@ fn main() {
 		players[i as usize] = player;
 	}
 
-	for mut player in &mut players {
+	for player in &mut players {
 		if player.player_mat.value < lowest_value {
 			lowest_value = player.player_mat.value;
 		}
@@ -242,7 +242,7 @@ fn main() {
 		}
 	}
 
-	for mut player in &mut players {
+	for player in &mut players {
 		if player.base.name == "" {
 			player.base = bases.remove(0);
 		}
