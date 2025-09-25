@@ -48,7 +48,6 @@ struct PlayerMat {
 fn choose_resolution_tile(mut rng: &mut impl Rng) {
 	print!("     Resolution: ");
 	let mut resolution_tiles = vec![
-		"Standard",
 		"Land Rush [1]",
 		"Factory Explosion [2]",
 		"Spoils of War [3]",
