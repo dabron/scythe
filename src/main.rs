@@ -114,6 +114,82 @@ fn choose_structure_bonus(mut rng: &mut impl Rng, modular_board: bool) {
 	println!("{}", structure_bonuses[0]);
 }
 
+enum TriumphTrackType {
+	Standard,
+	War,
+	Peace,
+	Modular,
+}
+
+fn choose_triumph_track(rng: &mut impl Rng, t: TriumphTrackType) {
+	let mut tiles: Vec<&str> = Vec::new();
+	match t {
+		TriumphTrackType::Standard => {
+			tiles.push("Upgrades x6");
+			tiles.push("Mechs x4");
+			tiles.push("Structures x4");
+			tiles.push("Recruits x4");
+			tiles.push("Workers x8");
+			tiles.push("Objective x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Popularity x18");
+			tiles.push("Power x16");
+		}
+		TriumphTrackType::War => {
+			tiles.push("Upgrades x6 / Structures x4");
+			tiles.push("Mechs x4");
+			tiles.push("Recruits x4");
+			tiles.push("Objective x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Power x16");
+			tiles.push("Combat Cards x8");
+		}
+		TriumphTrackType::Peace => {
+			tiles.push("Upgrades x6");
+			tiles.push("Structures x4");
+			tiles.push("Mechs x4 / Recruits x4");
+			tiles.push("Workers x8");
+			tiles.push("Objective x1");
+			tiles.push("Objective x1");
+			tiles.push("Popularity x18");
+			tiles.push("Encounters x16");
+			tiles.push("Encounters x3");
+			tiles.push("Factory Card x1");
+			tiles.push("Resources x16");
+		}
+		TriumphTrackType::Modular => {
+			tiles.push("Upgrades x6");
+			tiles.push("Mechs x4");
+			tiles.push("Structures x4");
+			tiles.push("Recruits x4");
+			tiles.push("Workers x8");
+			tiles.push("Objective x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Combat Victory x1");
+			tiles.push("Popularity x18");
+			tiles.push("Power x16");
+			tiles.push("Combat Cards x8");
+			tiles.push("Encounters x3");
+			tiles.push("Factory Card x1");
+			tiles.push("Resources x16");
+			while tiles.len() > 10 {
+				let r: usize = rng.gen_range(0..tiles.len());
+				tiles.remove(r);
+			}
+		}
+	}
+	print!("  Triumph Track: ");
+	for tile in tiles {
+		print!("{}\n                 ", tile);
+	}
+}
+
 fn add_invaders_from_afar(factions: &mut Vec<Faction>) {
 	factions.push(Faction{ name: "Albion", color: Color::BrightGreen });
 	factions.push(Faction{ name: "Togawa", color: Color::BrightMagenta });
@@ -188,6 +264,12 @@ fn main() {
 	if args.wind_gambit {
 		choose_resolution_tile(&mut rng);
 		choose_airship_tiles(&mut rng);
+	}
+
+	if args.rise_of_fenris {
+		choose_triumph_track(&mut rng, TriumphTrackType::Modular);
+	} else {
+		choose_triumph_track(&mut rng, TriumphTrackType::Standard);
 	}
 
 	println!();
