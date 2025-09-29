@@ -58,7 +58,7 @@ fn choose_resolution_tile(mut rng: &mut impl Rng) {
 		"Backup Plan [8]",
 	];
 	resolution_tiles.shuffle(&mut rng);
-	println!("{}", resolution_tiles[0]);
+	println!("{}", resolution_tiles[0].truecolor(0x99, 0x99, 0x99));
 }
 
 fn choose_airship_tiles(mut rng: &mut impl Rng) {
@@ -85,7 +85,11 @@ fn choose_airship_tiles(mut rng: &mut impl Rng) {
 	];
 	aggressive_airship_tile.shuffle(&mut rng);
 	passive_airship_tile.shuffle(&mut rng);
-	println!("{} - {}", aggressive_airship_tile[0], passive_airship_tile[0]);
+	println!(
+		"{} - {}",
+		aggressive_airship_tile[0].truecolor(0x99, 0x99, 0x99),
+		passive_airship_tile[0].truecolor(0x99, 0x99, 0x99)
+	);
 }
 
 fn choose_structure_bonus(mut rng: &mut impl Rng, modular_board: bool) {
@@ -111,7 +115,7 @@ fn choose_structure_bonus(mut rng: &mut impl Rng, modular_board: bool) {
 	}
 
 	structure_bonuses.shuffle(&mut rng);
-	println!("{}", structure_bonuses[0]);
+	println!("{}", structure_bonuses[0].truecolor(0x99, 0x99, 0x99));
 }
 
 enum TriumphTrackType {
@@ -186,7 +190,7 @@ fn choose_triumph_track(rng: &mut impl Rng, t: TriumphTrackType) {
 	}
 	print!("  Triumph Track: ");
 	for tile in tiles {
-		print!("{}\n                 ", tile);
+		print!("{}\n                 ", tile.truecolor(0x99, 0x99, 0x99));
 	}
 }
 
